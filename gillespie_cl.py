@@ -12,7 +12,7 @@ class gillespie():
             print('intializing Gillespie algorithm')
         return
     
-    def sir_gillespie(self, parms=[0.08, 0.05, 2000.0]):
+    def sir_gillespie(self, parms=[0.08, 0.05, 2000.0], timecap =False):
         """
         parms = [beta, gamma, N]
         In the function definition a default value is given in case none is provided
@@ -21,13 +21,14 @@ class gillespie():
         1/gamma:= recovery time
         """
         R_0 = parms[0]/parms[1]
-        s_list, i_list, r_list, y_list = [], [], [], []
+        s_list, i_list, r_list, y_list, time_list = [], [], [], [], []
         # infections at t=0
         i = 5
         # initially susceptible population
         s = parms[2]-i
         y = 0
         r = 0
+        tcap = 1000
 
         u = [s, i ,r ,y]
 
@@ -36,6 +37,7 @@ class gillespie():
         i_list.append(u[1])
         r_list.append(u[2])
         y_list.append(u[3])
+        time_list.append(0)
 
         beta, gamma, n = parms
 
@@ -45,13 +47,15 @@ class gillespie():
         a0 = ainf + arec
         pinf = ainf/a0
         #prec = arec/a0
-        #tp = 0
+        tp = 0
+        tstep =0
 
         while i>0:
             r1 = np.random.uniform()
-            #r2 = np.random.uniform() 
-            #dt = -np.log(r2/a0)
-            #tp = tp+dt
+            r2 = np.random.uniform() 
+            dt = -np.log(r2/a0)
+            tp = tp+dt
+            tstep = tstep+1
 
             if r1 < pinf:
                 s = s-1
@@ -71,12 +75,18 @@ class gillespie():
             i_list.append(i)
             r_list.append(r)
             y_list.append(y)
+            time_list.append(tp)
+            percent_infected = 100*y_list[-1]/parms[2]
+
+            if timecap and (tp >tcap):
+                return y_list[-1], percent_infected, tp, tstep, np.asarray(time_list), np.asarray(i_list)
 
         #print(y_list[-1])
         # take the last value of total cases, divided by total population *100
-        percent_infected = 100*y_list[-1]/parms[2] 
+        
+        #print(tp)
         # return only the values of total infected, percent of pop. infected and R_0
-        return y_list[-1], percent_infected, R_0
+        return y_list[-1], percent_infected, tp, tstep, time_list, y_list
     
         
     def G(self, n):
