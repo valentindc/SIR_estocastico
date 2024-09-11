@@ -1,7 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.special as sp
-from decimal import Decimal
 
 class gillespie():
 
@@ -12,23 +10,24 @@ class gillespie():
             print('intializing Gillespie algorithm')
         return
     
-    def sir_gillespie(self, parms=[0.08, 0.05, 2000.0], timecap =False):
+    def sir_gillespie(self, parms=[0.08, 0.05, 2000.0], i_0 =1, timecap =False):
         """
         parms = [beta, gamma, N]
         In the function definition a default value is given in case none is provided
         R_0:= beta/gamma; basic reproductive ratio (the average number of secondary
         cases arising from an average primary case in an entirely susceptible population)
         1/gamma:= recovery time
+        i_0: initially infected
+        Timecap: to cut the simulation short at a certain time if necessary
         """
-        R_0 = parms[0]/parms[1]
         s_list, i_list, r_list, y_list, time_list = [], [], [], [], []
         # infections at t=0
-        i = 5
+        i = i_0
         # initially susceptible population
         s = parms[2]-i
         y = 0
         r = 0
-        tcap = 1000
+        tcap = 20
 
         u = [s, i ,r ,y]
 
@@ -46,14 +45,13 @@ class gillespie():
    
         a0 = ainf + arec
         pinf = ainf/a0
-        #prec = arec/a0
         tp = 0
         tstep =0
 
         while i>0:
             r1 = np.random.uniform()
             r2 = np.random.uniform() 
-            dt = -np.log(r2/a0)
+            dt = -np.log(r2)/a0
             tp = tp+dt
             tstep = tstep+1
 
@@ -76,19 +74,13 @@ class gillespie():
             r_list.append(r)
             y_list.append(y)
             time_list.append(tp)
-            percent_infected = 100*y_list[-1]/parms[2]
 
             if timecap and (tp >tcap):
-                return y_list[-1], percent_infected, tp, tstep, np.asarray(time_list), np.asarray(i_list)
-
-        #print(y_list[-1])
-        # take the last value of total cases, divided by total population *100
-        
-        #print(tp)
-        # return only the values of total infected, percent of pop. infected and R_0
-        return y_list[-1], percent_infected, tp, tstep, time_list, y_list
+                return y_list[-1], tp, tstep, np.asarray(time_list), np.asarray(i_list)
+                
+        return y_list[-1], tp, tstep, np.asarray(time_list), np.asarray(i_list)
     
-        
+    
     def G(self, n):
         """
         THIS EXPRESSION IS VALID ONLY ON THE EPIDEMIC THRESHOLD (alpha = 1 as per the article cited below)
@@ -107,49 +99,11 @@ class gillespie():
             kk = s*t
             return kk
 
-
     def U(self, n, N):
         """
         just a summation but with care to move the upper limit as we're interested in 
         sweeping various orders of magnitude of populations size 
         """
         n = int(n) # force it into an integer just in case
-        q = sum(self.G(n) for n in range(n, 2*N))
+        q = sum(self.G(n) for n in range(n, int(5*N)))
         return q
-
-    
-    def ecdf(self, a):
-        """
-        First step on building the ecdf over the argument list a
-        """
-        x, counts = np.unique(a, return_counts=True)
-        cusum = np.cumsum(counts)
-        return x, cusum / cusum[-1]
-
-
-    def plot_ue_ut(self, a, N):
-        """
-        Using the output from ecdf()
-        """
-        x, y = self.ecdf(a)
-        x = np.insert(x, 0, x[0])
-        y = np.insert(y, 0, 0.)
-        y_1 = 1- y  # As the ccdf is actually needed
-        y_2 = np.zeros(shape=len(x))
-        for aj in range(len(x)):
-            """
-            each element in the array will be the value of the ccdf (U_n following paper notation)
-            divided by the theoretical expression built in the epidemic threshold evaluated on n
-            """
-            y_2[aj] = y_1[aj]/self.U(x[aj], N)
-
-        x_1 = x/N**(2/3)    # figure 4 of the article uses this as the horizontal axis
-        labell='%.1e' % Decimal(N)
-   
-#        plt.plot(x_1, y_2, drawstyle='steps-post', label=labell)
-        plt.scatter(x_1, y_2, label=labell, s=10)
-        plt.legend()
-#        plt.plot(x_1, y_2, marker='o', label=labell)
-
-        plt.grid(True)
-        
