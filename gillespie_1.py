@@ -4,8 +4,9 @@ from gillespie_cl import gillespie
 from tqdm import tqdm
 
 """
-In this script I intend to do a sweep in r_0 values of the SIR model
+In this script I do a sweep in r_0 values of the SIR model
 implemented using gillespie algorithm
+The horizontal axis shows the total amount of infections
 """
 
 sim = gillespie()
