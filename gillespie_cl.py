@@ -20,9 +20,12 @@ class gillespie():
         i_0: initially infected
         Timecap: to cut the simulation short at a certain time if necessary
         """
+        
         s_list, i_list, r_list, y_list, time_list = [], [], [], [], []
+        
         # infections at t=0
         i = i_0
+        
         # initially susceptible population
         s = parms[2]-i
         y = 0
@@ -40,11 +43,12 @@ class gillespie():
 
         beta, gamma, n = parms
 
+        # transition rates
         ainf = beta*s*i/n
         arec = gamma*i
    
         a0 = ainf + arec
-        pinf = ainf/a0
+        pinf = ainf/a0    # infection probability
         tp = 0
         tstep =0
 
@@ -59,7 +63,7 @@ class gillespie():
                 s = s-1
                 i = i+1
                 y = y+1
-            else:
+            else:    # prec=1-pinf
                 r = r+1
                 i = i-1
         
